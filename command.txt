@@ -1,0 +1,15 @@
+npm init -y
+
+npm install bip39 hdkey ethers
+
+sudo npm install --save-dev typescript
+
+sudo npm install --save express
+npm install -save-dev @types/express
+sudo npm i dotenv
+sudo npm i cors
+
+git init
+git remote add origin https://github.com/taiwotherock/ethbscclient.git
+git branch -M main
+git push -u origin main
