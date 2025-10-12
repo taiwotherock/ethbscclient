@@ -112,14 +112,14 @@ export async function swapPancake(key:string, amountIn: string, token1: string,
     sqrtPriceLimitX96: 0 // no limit
   };
 
-  /*
+  
   const tx = await router.exactInputSingle(params, { value: amountInWei });
   console.log("Swap sent, tx hash:", tx.hash);
 
   const receipt = await tx.wait();
   console.log("Swap mined, block number:", receipt.blockNumber);
-  */
+  
 
-  return null; //{success: true, txId: tx.hash, message: tx}
+  return {success: true, txId: tx.hash, message: tx}
 }
 

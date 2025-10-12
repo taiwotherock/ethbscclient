@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 import { generateBinanceWallet } from './createbnbwallet'
 import { checkIsAdmin,addAdmin } from './eth-access-control-client'
 import { swapPancake } from './eth-swap'
-import { createOffer,releaseOffer,markOfferPaid,getVaultTokenBalance } from './eth-escrow-vault'
+import { createOffer,releaseOffer,markOfferPaid,
+  getVaultTokenBalance,getWalletBalance,
+  pickOffer,updateWhiteOrBlackList,fetchOfferStatus } from './eth-escrow-vault'
 
 
 
@@ -91,9 +93,25 @@ app.listen(PORT, () => {
     try {
   
      
-      const { key, refNo} = req.body;
+      const { key, refNo,token} = req.body;
       console.log("refNo: "  + " " + refNo);
-      const response = await releaseOffer(key,refNo);
+      const response = await releaseOffer(key,refNo,token);
+
+      res.json(response)
+ 
+    } catch (error) {
+      console.log(`Error: release offer ` + error.message)
+      res.status(500).json({success:false, message: error.message})
+    }
+  })
+
+  app.post('/pick-offer', async (req, res) => {
+    try {
+  
+     
+      const { key, refNo,tokenAmount,isBuy} = req.body;
+      console.log("refNo: "  + " " + refNo);
+      const response = await pickOffer(key,refNo,isBuy,tokenAmount);
 
       res.json(response)
  
@@ -110,6 +128,28 @@ app.listen(PORT, () => {
       const { key, refNo} = req.body;
       console.log("refNo: "  + " " + refNo);
       const response = await markOfferPaid(key,refNo);
+
+      res.json(response)
+ 
+    } catch (error) {
+      console.log(`Error: release offer ` + error.message)
+      res.status(500).json({success:false, message: error.message})
+    }
+  })
+
+  app.post('/white-black-status', async (req, res) => {
+    try {
+  
+      if(!validateToken(req))
+      {
+        console.log(`Invalid authentication API key or token `)
+        res.status(500).json({success:false,message:'Invalid authentication API key or token '})
+        return;
+      }
+     
+      const { key, address, whiteOrBlack,status} = req.body;
+      console.log("address: "  + " " + address);
+      const response = await updateWhiteOrBlackList(key,address,status,whiteOrBlack);
 
       res.json(response)
  
@@ -148,6 +188,64 @@ app.listen(PORT, () => {
     } catch (error) {
       console.log(`Error: swap ` + error.message)
       res.status(500).json({success:false, message: error.message})
+    }
+  })
+
+  app.post('/balance', async (req, res) => {
+    try {
+  
+     
+      const {walletAddress,tokenAddress,symbol, rpcUrl,decimalNo} = req.body;
+      console.log("refNo: "  + " " + walletAddress);
+      const response = await getWalletBalance(tokenAddress,walletAddress,symbol);
+
+      res.json(response)
+ 
+    } catch (error) {
+      console.log(`Error: fetch balance ` + error.message)
+      res.status(500).json({success:false, message: error.message})
+    }
+  })
+
+  app.get('/fetch-offer/:ref', async (req, res) => {
+    try {
+  
+      if(!validateToken(req))
+      {
+        console.log(`Invalid authentication API key or token `)
+        res.status(500).json({success:false,message:'Invalid authentication API key or token '})
+        return;
+      }
+      
+      const response = await fetchOfferStatus(req.params.ref);
+  
+      res.json(response)
+    
+      //res.json(successResponse(response))
+    } catch (error) {
+     console.log(`Error: fetch offer ` + error.message)
+      res.status(500).json({success:false, message: error.message})
+    }
+  });
+
+  app.post('/fetch-tx-byid', async (req, res) => {
+    try {
+
+   
+      const { chain,symbol,txId,rpcUrl} = req.body;
+      var response : any;
+      console.log('fetch status by id' + symbol + ' ' + txId +' ' + chain )
+      if(chain == 'TRON') {
+
+        response = ''; //await tranStatus(txId);
+        res.json(response)
+      }
+    
+
+      //res.json(successResponse(response))
+    } catch (error) {
+      console.log(`Error fetching transactions `)
+      res.status(500).json({success:false,error:'error fetching transactions ' + error})
     }
   })
 

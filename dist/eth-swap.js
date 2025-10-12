@@ -122,14 +122,11 @@ function swapPancake(key, amountIn, token1, token2) {
             amountOutMinimum: 0, // set >0 for slippage protection
             sqrtPriceLimitX96: 0 // no limit
         };
-        /*
-        const tx = await router.exactInputSingle(params, { value: amountInWei });
+        const tx = yield router.exactInputSingle(params, { value: amountInWei });
         console.log("Swap sent, tx hash:", tx.hash);
-      
-        const receipt = await tx.wait();
+        const receipt = yield tx.wait();
         console.log("Swap mined, block number:", receipt.blockNumber);
-        */
-        return null; //{success: true, txId: tx.hash, message: tx}
+        return { success: true, txId: tx.hash, message: tx };
     });
 }
 //# sourceMappingURL=eth-swap.js.map
