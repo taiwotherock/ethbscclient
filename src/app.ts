@@ -179,9 +179,9 @@ app.listen(PORT, () => {
     try {
   
      
-      const { key, token1,token2, amountIn} = req.body;
+      const { key, token1,token2, amountIn,symbol1,symbol2} = req.body;
       console.log("refNo: "  + " " + token1);
-      const response = await swapPancake(key,amountIn,token1,token2);
+      const response = await swapPancake(key,amountIn,token1,token2,symbol1,symbol2);
 
       res.json(response)
  

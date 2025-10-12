@@ -308,14 +308,14 @@ export async function getWalletBalance(token: string, publicAddress: string, sym
   console.log('public address ' + publicAddress);
   console.log('token addr ' + token);
 
-  if(symbol == 'BNB')
+  if(symbol == 'WBNB' || symbol == 'WETH' || symbol == 'ETH' || symbol == 'BNB')
   {
 
     const balanceWei = await provider.getBalance(publicAddress);
     // 🧮 Convert from Wei to BNB
-    console.log("balanceWei " + balanceWei);
+    console.log(" balanceWei " + balanceWei);
      const balanceBNB = ethers.formatEther(balanceWei);
-     console.log("balanceBNB " + balanceWei);
+     console.log(symbol + " balance " + balanceWei);
 
      return {success: true, balance: balanceBNB }
   }
@@ -323,7 +323,7 @@ export async function getWalletBalance(token: string, publicAddress: string, sym
     const tokenContract = new ethers.Contract(ethers.getAddress(token), ERC20_ABI, provider);
     const balance = await tokenContract.balanceOf(publicAddress);
     const decimals: number = await tokenContract.decimals();
-    console.log("USDT user balance 2 " + balance);
+    console.log( symbol + " user balance 2 " + balance);
     console.log('bal ' + balance + ' ' + decimals);
     const bal = ethers.formatUnits(balance, decimals);
     console.log(`Wallet Balance: ${bal}`);

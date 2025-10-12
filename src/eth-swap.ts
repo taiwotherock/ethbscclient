@@ -15,7 +15,7 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
-const WBNB_ABI = [
+const ERC20_ABI_FULL = [
   "function deposit() payable",
   "function approve(address spender, uint256 amount) public returns (bool)",
   "function balanceOf(address owner) view returns (uint256)",
@@ -37,9 +37,10 @@ const factoryAbi = [
 ];
 
 export async function swapPancake(key:string, amountIn: string, token1: string,
-     token2: string
+     token2: string,symbol1: string, symbol2: string
 ) {
 
+    //symbol1: string, symbol2: string, factoryAddress: 
     console.log('PANCAKE_ROUTER_ADDRESS ' + PANCAKE_ROUTER_ADDRESS)
     const wallet = new ethers.Wallet(key, provider);
     const router = new ethers.Contract(PANCAKE_ROUTER_ADDRESS, routerAbi, wallet);
@@ -47,56 +48,58 @@ export async function swapPancake(key:string, amountIn: string, token1: string,
     const FACTORY_V3 = ethers.getAddress("0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865");
     const factory = new ethers.Contract(FACTORY_V3, factoryAbi, provider);
 
-    const WBNB = token1; // "0xae13d989dac2f0debff460ac112a837c89baa7cd";
-    const USDT = token2; // "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd";
-    const fee = 2500; // try 100, 500, 2500, 10000
+    const address1 = token1; // "0xae13d989dac2f0debff460ac112a837c89baa7cd";
+    const address2 = token2; // "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd";
+    const fee = 500; //2500; // try 100, 500, 2500, 10000
 
-    const pool = await factory.getPool(WBNB, USDT, fee);
+    const pool = await factory.getPool(address1, address2, fee);
     console.log("Pool:", pool);
 
 
-    const amountInWei = ethers.parseEther(amountIn);
-    console.log("Wrapped BNB to WBNB:", amountInWei.toString());
-     // 1️⃣ Native BNB balance
-    const bnbBalance = await provider.getBalance(wallet.address);
-    console.log("Native BNB Balance:", ethers.formatEther(bnbBalance), "BNB");
+    let amountInWei : any;
+    if(symbol1 == 'WBNB' || symbol1 == 'WETH' || symbol1 == 'ETH' || symbol1 == 'BNB')
+    {
+        amountInWei = ethers.parseEther(amountIn);
+        console.log("Wrapped: " + symbol1 + " " + amountInWei.toString());
+        // 1️⃣ Native BNB balance
+        const bnbBalance = await provider.getBalance(wallet.address);
+        console.log("Native " + symbol1 + " Balance:", ethers.formatEther(bnbBalance), symbol1);
 
-   
-    //const wbnb = new ethers.Contract(token1, WBNB_ABI, wallet);
-
+        console.log('amount in: ' + amountInWei);
     
-    console.log('amount in: ' + amountInWei);
-    //const tx1 = await wbnb.deposit({ value: amountInWei });
-    //await tx1.wait();
+        const bnbBalance2 = await provider.getBalance(wallet.address);
+        console.log("Native Balance2 :", ethers.formatEther(bnbBalance2), symbol1);
+    }
+    else {
 
-    const bnbBalance2 = await provider.getBalance(wallet.address);
-    console.log("Native BNB Balance2 :", ethers.formatEther(bnbBalance2), "BNB");
+        // 2️⃣  ERC20 balance
+        //const wbnbContract = new ethers.Contract(token1, ERC20_ABI, provider);
+        const contract1 = new ethers.Contract(token1, ERC20_ABI_FULL, wallet);
+        const balance1 = await contract1.balanceOf(wallet.address);
+        const decimals = await contract1.decimals();
+        console.log(' balance1 & Decimals  ' + balance1 + ' ' + decimals)
+        amountInWei = balance1; // Number(ethers.formatUnits(balance1, decimals));
 
-    // 2️⃣ WBNB ERC20 balance
-    //const wbnbContract = new ethers.Contract(token1, ERC20_ABI, provider);
-    const wbnbContract = new ethers.Contract(token1, WBNB_ABI, wallet);
-    const wbnbBalance = await wbnbContract.balanceOf(wallet.address);
-    const decimals = await wbnbContract.decimals();
+        console.log(
+            symbol1 + ' Balance 1 : ' + amountInWei
+        );
+
+        const approveTx = await contract1.approve(PANCAKE_ROUTER_ADDRESS, amountInWei);
+        await approveTx.wait();
+        console.log("Router approved to spend " + symbol1);
+    }
+
+    const contract2 = new ethers.Contract(token2, ERC20_ABI_FULL, wallet);
+    const balance2 = await contract2.balanceOf(wallet.address);
+    const decimals1 = await contract2.decimals();
 
     console.log(
-        `WBNB Balance: ${Number(ethers.formatUnits(wbnbBalance, decimals))} WBNB`
+        ` Balance: ${Number(ethers.formatUnits(balance2, decimals1))} ` + symbol2
     );
 
-    const usdtContract = new ethers.Contract(token2, WBNB_ABI, wallet);
-    const usdtBalance = await usdtContract.balanceOf(wallet.address);
-    const decimals1 = await usdtContract.decimals();
-
-    console.log(
-        `USDT Balance: ${Number(ethers.formatUnits(usdtBalance, decimals1))} USDT`
-    );
-
-    const approveTx = await wbnbContract.approve(PANCAKE_ROUTER_ADDRESS, amountInWei);
-   await approveTx.wait();
-   console.log("Router approved to spend WBNB");
- 
-    
     const deadline = Math.floor(Date.now() / 1000) + 1200; // +20 min
 
+    console.log("Router amount in " + amountInWei);
 
   // 2️⃣ Apply slippage (0.5%)
   const slippage = 0.005;
@@ -113,7 +116,7 @@ export async function swapPancake(key:string, amountIn: string, token1: string,
   };
 
   
-  const tx = await router.exactInputSingle(params, { value: amountInWei });
+  const tx = await router.exactInputSingle(params, { value: 0 }); //amountInWei
   console.log("Swap sent, tx hash:", tx.hash);
 
   const receipt = await tx.wait();

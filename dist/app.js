@@ -142,9 +142,9 @@ app.post('/vault-balance', (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 app.post('/swap-with-pancake', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { key, token1, token2, amountIn } = req.body;
+        const { key, token1, token2, amountIn, symbol1, symbol2 } = req.body;
         console.log("refNo: " + " " + token1);
-        const response = yield (0, eth_swap_1.swapPancake)(key, amountIn, token1, token2);
+        const response = yield (0, eth_swap_1.swapPancake)(key, amountIn, token1, token2, symbol1, symbol2);
         res.json(response);
     }
     catch (error) {
