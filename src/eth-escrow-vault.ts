@@ -303,15 +303,17 @@ export async function getVaultTokenBalance(token: string, contractAddr: string) 
   return {success: true, balance: bal }
 }
 
-export async function getWalletBalance(token: string, publicAddress: string, symbol: string) {
+export async function getWalletBalance(token: string, publicAddress: 
+    string, symbol: string, rpcUrl: string) {
 
   console.log('public address ' + publicAddress);
   console.log('token addr ' + token);
+  const provider2 = new ethers.JsonRpcProvider(rpcUrl);
 
   if(symbol == 'WBNB' || symbol == 'WETH' || symbol == 'ETH' || symbol == 'BNB')
   {
 
-    const balanceWei = await provider.getBalance(publicAddress);
+    const balanceWei = await provider2.getBalance(publicAddress);
     // 🧮 Convert from Wei to BNB
     console.log(" balanceWei " + balanceWei);
      const balanceBNB = ethers.formatEther(balanceWei);
@@ -320,7 +322,8 @@ export async function getWalletBalance(token: string, publicAddress: string, sym
      return {success: true, balance: balanceBNB }
   }
   else {
-    const tokenContract = new ethers.Contract(ethers.getAddress(token), ERC20_ABI, provider);
+    
+    const tokenContract = new ethers.Contract(ethers.getAddress(token), ERC20_ABI, provider2);
     const balance = await tokenContract.balanceOf(publicAddress);
     const decimals: number = await tokenContract.decimals();
     console.log( symbol + " user balance 2 " + balance);

@@ -229,12 +229,13 @@ function getVaultTokenBalance(token, contractAddr) {
         return { success: true, balance: bal };
     });
 }
-function getWalletBalance(token, publicAddress, symbol) {
+function getWalletBalance(token, publicAddress, symbol, rpcUrl) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('public address ' + publicAddress);
         console.log('token addr ' + token);
+        const provider2 = new ethers_1.ethers.JsonRpcProvider(rpcUrl);
         if (symbol == 'WBNB' || symbol == 'WETH' || symbol == 'ETH' || symbol == 'BNB') {
-            const balanceWei = yield provider.getBalance(publicAddress);
+            const balanceWei = yield provider2.getBalance(publicAddress);
             // 🧮 Convert from Wei to BNB
             console.log(" balanceWei " + balanceWei);
             const balanceBNB = ethers_1.ethers.formatEther(balanceWei);
@@ -242,7 +243,7 @@ function getWalletBalance(token, publicAddress, symbol) {
             return { success: true, balance: balanceBNB };
         }
         else {
-            const tokenContract = new ethers_1.ethers.Contract(ethers_1.ethers.getAddress(token), ERC20_ABI, provider);
+            const tokenContract = new ethers_1.ethers.Contract(ethers_1.ethers.getAddress(token), ERC20_ABI, provider2);
             const balance = yield tokenContract.balanceOf(publicAddress);
             const decimals = yield tokenContract.decimals();
             console.log(symbol + " user balance 2 " + balance);

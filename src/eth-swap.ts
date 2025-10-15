@@ -37,16 +37,17 @@ const factoryAbi = [
 ];
 
 export async function swapPancake(key:string, amountIn: string, token1: string,
-     token2: string,symbol1: string, symbol2: string
+     token2: string,symbol1: string, symbol2: string, rpcUrl: string
 ) {
 
     //symbol1: string, symbol2: string, factoryAddress: 
+    const provider2 = new ethers.JsonRpcProvider(rpcUrl);
     console.log('PANCAKE_ROUTER_ADDRESS ' + PANCAKE_ROUTER_ADDRESS)
-    const wallet = new ethers.Wallet(key, provider);
+    const wallet = new ethers.Wallet(key, provider2);
     const router = new ethers.Contract(PANCAKE_ROUTER_ADDRESS, routerAbi, wallet);
     
     const FACTORY_V3 = ethers.getAddress("0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865");
-    const factory = new ethers.Contract(FACTORY_V3, factoryAbi, provider);
+    const factory = new ethers.Contract(FACTORY_V3, factoryAbi, provider2);
 
     const address1 = token1; // "0xae13d989dac2f0debff460ac112a837c89baa7cd";
     const address2 = token2; // "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd";
@@ -57,20 +58,23 @@ export async function swapPancake(key:string, amountIn: string, token1: string,
 
 
     let amountInWei : any;
-    if(symbol1 == 'WBNB' || symbol1 == 'WETH' || symbol1 == 'ETH' || symbol1 == 'BNB')
+    if(symbol1 == 'WBNB' || symbol1 == 'WETH' || symbol1 == 'ETH' || symbol1 == 'BNB' )
     {
         amountInWei = ethers.parseEther(amountIn);
         console.log("Wrapped: " + symbol1 + " " + amountInWei.toString());
         // 1️⃣ Native BNB balance
-        const bnbBalance = await provider.getBalance(wallet.address);
+        const bnbBalance = await provider2.getBalance(wallet.address);
         console.log("Native " + symbol1 + " Balance:", ethers.formatEther(bnbBalance), symbol1);
 
         console.log('amount in: ' + amountInWei);
     
-        const bnbBalance2 = await provider.getBalance(wallet.address);
+        const bnbBalance2 = await provider2.getBalance(wallet.address);
         console.log("Native Balance2 :", ethers.formatEther(bnbBalance2), symbol1);
     }
     else {
+
+        const nativeBalance = await provider2.getBalance(wallet.address);
+        console.log("Native Balance:", ethers.formatEther(nativeBalance), symbol1);
 
         // 2️⃣  ERC20 balance
         //const wbnbContract = new ethers.Contract(token1, ERC20_ABI, provider);
@@ -126,3 +130,25 @@ export async function swapPancake(key:string, amountIn: string, token1: string,
   return {success: true, txId: tx.hash, message: tx}
 }
 
+
+export async function fetchLiquidityPool(key:string, amountIn: string, token1: string,
+     token2: string,symbol1: string, symbol2: string, rpcUrl: string
+) {
+
+    //symbol1: string, symbol2: string, factoryAddress: 
+    const provider2 = new ethers.JsonRpcProvider(rpcUrl);
+    console.log('PANCAKE_ROUTER_ADDRESS ' + PANCAKE_ROUTER_ADDRESS)
+    const wallet = new ethers.Wallet(key, provider2);
+    const router = new ethers.Contract(PANCAKE_ROUTER_ADDRESS, routerAbi, wallet);
+    
+    const FACTORY_V3 = ethers.getAddress("0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865");
+    const factory = new ethers.Contract(FACTORY_V3, factoryAbi, provider2);
+
+    const address1 = token1; // "0xae13d989dac2f0debff460ac112a837c89baa7cd";
+    const address2 = token2; // "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd";
+    const fee = 500; //2500; // try 100, 500, 2500, 10000
+
+    const pool = await factory.getPool(address1, address2, fee);
+    console.log("Pool:", pool);
+
+}

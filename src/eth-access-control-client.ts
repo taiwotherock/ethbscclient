@@ -20,16 +20,21 @@ const ABI = [
 const ADMIN_ROLE = keccak256(toUtf8Bytes("ADMIN_ROLE"));
 
 // ====== Provider & Wallet ======
-const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
+
 
 // ====== Functions ======
 
 /**
  * Grant admin role to an address
  */
-export async function addAdmin(address: string): Promise<void> {
+export async function addAdmin(key: string, rpcUrl: string, contractAddress:string,
+   address: string, role:string) {
+
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  const wallet = new ethers.Wallet(key, provider);
+ const contract = new ethers.Contract(contractAddress, ABI, wallet);
+ 
+
   const tx = await contract.grantRole(ADMIN_ROLE, address);
   console.log(`Transaction sent: ${tx.hash}`);
   await tx.wait();
@@ -39,7 +44,12 @@ export async function addAdmin(address: string): Promise<void> {
 /**
  * Revoke admin role from an address
  */
-export async function removeAdmin(address: string): Promise<void> {
+export async function removeAdmin(key: string, rpcUrl: string, contractAddress:string,
+   address: string) {
+
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+const wallet = new ethers.Wallet(key, provider);
+const contract = new ethers.Contract(contractAddress, ABI, wallet);
   const tx = await contract.revokeRole(ADMIN_ROLE, address);
   console.log(`Transaction sent: ${tx.hash}`);
   await tx.wait();
@@ -49,7 +59,11 @@ export async function removeAdmin(address: string): Promise<void> {
 /**
  * Check if an address is an admin
  */
-export async function checkIsAdmin(address: string): Promise<boolean> {
+export async function checkIsAdmin(address: string,rpcUrl: string, contractAddress: string): Promise<boolean> {
+
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  
+ const contract = new ethers.Contract(contractAddress, ABI, provider);
   const result: boolean = await contract.isAdmin(address);
   console.log(`${address} is admin: ${result}`);
   return result;

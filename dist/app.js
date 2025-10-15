@@ -17,6 +17,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const eth_access_control_client_1 = require("./eth-access-control-client");
 const eth_swap_1 = require("./eth-swap");
 const eth_escrow_vault_1 = require("./eth-escrow-vault");
+const eth_lending_1 = require("./eth-lending");
 dotenv_1.default.config();
 const PORT = process.env._PORT;
 const origins = process.env.CORS_ORIGIN;
@@ -51,7 +52,9 @@ app.get('/check-role/:address', (req, res) => __awaiter(void 0, void 0, void 0, 
             res.status(500).json({ success: false, message: 'Invalid authentication API key or token ' });
             return;
         }
-        const response = yield (0, eth_access_control_client_1.checkIsAdmin)(req.params.address);
+        const rpcUrl = req.headers['x-rpc-url'];
+        console.log(rpcUrl);
+        const response = yield (0, eth_access_control_client_1.checkIsAdmin)(req.params.address, rpcUrl, req.query.contractAddress);
         res.json(response);
         //res.json(successResponse(response))
     }
@@ -118,9 +121,13 @@ app.post('/white-black-status', (req, res) => __awaiter(void 0, void 0, void 0, 
             res.status(500).json({ success: false, message: 'Invalid authentication API key or token ' });
             return;
         }
-        const { key, address, whiteOrBlack, status } = req.body;
-        console.log("address: " + " " + address);
-        const response = yield (0, eth_escrow_vault_1.updateWhiteOrBlackList)(key, address, status, whiteOrBlack);
+        const { key, address, whiteOrBlack, status, ctype, rpcUrl, contractAddress } = req.body;
+        console.log("address: " + " " + address + ' ' + ctype);
+        let response;
+        if (ctype == 'ESCROW')
+            response = yield (0, eth_escrow_vault_1.updateWhiteOrBlackList)(key, address, status, whiteOrBlack);
+        else
+            response = yield (0, eth_lending_1.updateWhiteOrBlackListLend)(key, address, status, whiteOrBlack, rpcUrl, contractAddress);
         res.json(response);
     }
     catch (error) {
@@ -142,9 +149,9 @@ app.post('/vault-balance', (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 app.post('/swap-with-pancake', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { key, token1, token2, amountIn, symbol1, symbol2 } = req.body;
+        const { key, token1, token2, amountIn, symbol1, symbol2, rpcUrl } = req.body;
         console.log("refNo: " + " " + token1);
-        const response = yield (0, eth_swap_1.swapPancake)(key, amountIn, token1, token2, symbol1, symbol2);
+        const response = yield (0, eth_swap_1.swapPancake)(key, amountIn, token1, token2, symbol1, symbol2, rpcUrl);
         res.json(response);
     }
     catch (error) {
@@ -156,7 +163,7 @@ app.post('/balance', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const { walletAddress, tokenAddress, symbol, rpcUrl, decimalNo } = req.body;
         console.log("refNo: " + " " + walletAddress);
-        const response = yield (0, eth_escrow_vault_1.getWalletBalance)(tokenAddress, walletAddress, symbol);
+        const response = yield (0, eth_escrow_vault_1.getWalletBalance)(tokenAddress, walletAddress, symbol, rpcUrl);
         res.json(response);
     }
     catch (error) {
@@ -194,6 +201,40 @@ app.post('/fetch-tx-byid', (req, res) => __awaiter(void 0, void 0, void 0, funct
     catch (error) {
         console.log(`Error fetching transactions `);
         res.status(500).json({ success: false, error: 'error fetching transactions ' + error });
+    }
+}));
+app.post('/deposit-into-liquidity-pool', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!validateToken(req)) {
+            console.log(`Invalid authentication API key or token `);
+            res.status(500).json({ success: false, message: 'Invalid authentication API key or token ' });
+            return;
+        }
+        const { tokenAddress, amount, key, rpcUrl, contractAddress } = req.body;
+        console.log("deposit into pool req: " + tokenAddress + " " + contractAddress);
+        const response = yield (0, eth_lending_1.depositIntoVault)(key, amount, rpcUrl, contractAddress, tokenAddress);
+        res.json(response);
+    }
+    catch (error) {
+        console.log(`Error deposit into pool `);
+        res.status(500).json({ success: false, message: 'error deposit into pool ' + error });
+    }
+}));
+app.post('/withdraw-liquidity-pool', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!validateToken(req)) {
+            console.log(`Invalid authentication API key or token `);
+            res.status(500).json({ success: false, message: 'Invalid authentication API key or token ' });
+            return;
+        }
+        const { tokenAddress, amount, key, rpcUrl, contractAddress } = req.body;
+        console.log("withdraw from pool req: " + tokenAddress + " " + contractAddress);
+        const response = yield (0, eth_lending_1.withdrawFromVault)(key, amount, rpcUrl, contractAddress, tokenAddress);
+        res.json(response);
+    }
+    catch (error) {
+        console.log(`Error withdraw into pool `);
+        res.status(500).json({ success: false, message: 'error withdraw into pool ' + error });
     }
 }));
 //# sourceMappingURL=app.js.map

@@ -32,15 +32,15 @@ const ABI = [
 // ====== Constants ======
 const ADMIN_ROLE = (0, ethers_2.keccak256)((0, ethers_2.toUtf8Bytes)("ADMIN_ROLE"));
 // ====== Provider & Wallet ======
-const provider = new ethers_1.ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers_1.ethers.Wallet(PRIVATE_KEY, provider);
-const contract = new ethers_1.ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 // ====== Functions ======
 /**
  * Grant admin role to an address
  */
-function addAdmin(address) {
+function addAdmin(key, rpcUrl, contractAddress, address, role) {
     return __awaiter(this, void 0, void 0, function* () {
+        const provider = new ethers_1.ethers.JsonRpcProvider(rpcUrl);
+        const wallet = new ethers_1.ethers.Wallet(key, provider);
+        const contract = new ethers_1.ethers.Contract(contractAddress, ABI, wallet);
         const tx = yield contract.grantRole(ADMIN_ROLE, address);
         console.log(`Transaction sent: ${tx.hash}`);
         yield tx.wait();
@@ -50,8 +50,11 @@ function addAdmin(address) {
 /**
  * Revoke admin role from an address
  */
-function removeAdmin(address) {
+function removeAdmin(key, rpcUrl, contractAddress, address) {
     return __awaiter(this, void 0, void 0, function* () {
+        const provider = new ethers_1.ethers.JsonRpcProvider(rpcUrl);
+        const wallet = new ethers_1.ethers.Wallet(key, provider);
+        const contract = new ethers_1.ethers.Contract(contractAddress, ABI, wallet);
         const tx = yield contract.revokeRole(ADMIN_ROLE, address);
         console.log(`Transaction sent: ${tx.hash}`);
         yield tx.wait();
@@ -61,8 +64,10 @@ function removeAdmin(address) {
 /**
  * Check if an address is an admin
  */
-function checkIsAdmin(address) {
+function checkIsAdmin(address, rpcUrl, contractAddress) {
     return __awaiter(this, void 0, void 0, function* () {
+        const provider = new ethers_1.ethers.JsonRpcProvider(rpcUrl);
+        const contract = new ethers_1.ethers.Contract(contractAddress, ABI, provider);
         const result = yield contract.isAdmin(address);
         console.log(`${address} is admin: ${result}`);
         return result;

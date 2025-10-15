@@ -43,6 +43,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.swapPancake = swapPancake;
+exports.fetchLiquidityPool = fetchLiquidityPool;
 const ethers_1 = require("ethers");
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
@@ -72,14 +73,15 @@ const routerAbi = [
 const factoryAbi = [
     "function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address)"
 ];
-function swapPancake(key, amountIn, token1, token2, symbol1, symbol2) {
+function swapPancake(key, amountIn, token1, token2, symbol1, symbol2, rpcUrl) {
     return __awaiter(this, void 0, void 0, function* () {
         //symbol1: string, symbol2: string, factoryAddress: 
+        const provider2 = new ethers_1.ethers.JsonRpcProvider(rpcUrl);
         console.log('PANCAKE_ROUTER_ADDRESS ' + PANCAKE_ROUTER_ADDRESS);
-        const wallet = new ethers_1.ethers.Wallet(key, provider);
+        const wallet = new ethers_1.ethers.Wallet(key, provider2);
         const router = new ethers_1.ethers.Contract(PANCAKE_ROUTER_ADDRESS, routerAbi, wallet);
         const FACTORY_V3 = ethers_1.ethers.getAddress("0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865");
-        const factory = new ethers_1.ethers.Contract(FACTORY_V3, factoryAbi, provider);
+        const factory = new ethers_1.ethers.Contract(FACTORY_V3, factoryAbi, provider2);
         const address1 = token1; // "0xae13d989dac2f0debff460ac112a837c89baa7cd";
         const address2 = token2; // "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd";
         const fee = 500; //2500; // try 100, 500, 2500, 10000
@@ -90,13 +92,15 @@ function swapPancake(key, amountIn, token1, token2, symbol1, symbol2) {
             amountInWei = ethers_1.ethers.parseEther(amountIn);
             console.log("Wrapped: " + symbol1 + " " + amountInWei.toString());
             // 1️⃣ Native BNB balance
-            const bnbBalance = yield provider.getBalance(wallet.address);
+            const bnbBalance = yield provider2.getBalance(wallet.address);
             console.log("Native " + symbol1 + " Balance:", ethers_1.ethers.formatEther(bnbBalance), symbol1);
             console.log('amount in: ' + amountInWei);
-            const bnbBalance2 = yield provider.getBalance(wallet.address);
+            const bnbBalance2 = yield provider2.getBalance(wallet.address);
             console.log("Native Balance2 :", ethers_1.ethers.formatEther(bnbBalance2), symbol1);
         }
         else {
+            const nativeBalance = yield provider2.getBalance(wallet.address);
+            console.log("Native Balance:", ethers_1.ethers.formatEther(nativeBalance), symbol1);
             // 2️⃣  ERC20 balance
             //const wbnbContract = new ethers.Contract(token1, ERC20_ABI, provider);
             const contract1 = new ethers_1.ethers.Contract(token1, ERC20_ABI_FULL, wallet);
@@ -133,6 +137,22 @@ function swapPancake(key, amountIn, token1, token2, symbol1, symbol2) {
         const receipt = yield tx.wait();
         console.log("Swap mined, block number:", receipt.blockNumber);
         return { success: true, txId: tx.hash, message: tx };
+    });
+}
+function fetchLiquidityPool(key, amountIn, token1, token2, symbol1, symbol2, rpcUrl) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //symbol1: string, symbol2: string, factoryAddress: 
+        const provider2 = new ethers_1.ethers.JsonRpcProvider(rpcUrl);
+        console.log('PANCAKE_ROUTER_ADDRESS ' + PANCAKE_ROUTER_ADDRESS);
+        const wallet = new ethers_1.ethers.Wallet(key, provider2);
+        const router = new ethers_1.ethers.Contract(PANCAKE_ROUTER_ADDRESS, routerAbi, wallet);
+        const FACTORY_V3 = ethers_1.ethers.getAddress("0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865");
+        const factory = new ethers_1.ethers.Contract(FACTORY_V3, factoryAbi, provider2);
+        const address1 = token1; // "0xae13d989dac2f0debff460ac112a837c89baa7cd";
+        const address2 = token2; // "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd";
+        const fee = 500; //2500; // try 100, 500, 2500, 10000
+        const pool = yield factory.getPool(address1, address2, fee);
+        console.log("Pool:", pool);
     });
 }
 //# sourceMappingURL=eth-swap.js.map
